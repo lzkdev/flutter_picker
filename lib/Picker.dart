@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as Dialog;
 import 'dart:async';
 import 'PickerLocalizations.dart';
+import 'package:timezone/standalone.dart' as tz;
 
 const bool __printDebug = false;
 
@@ -1179,6 +1180,8 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
   /// minimum datetime
   final DateTime? minValue, maxValue;
 
+  final String? timeZone;
+
   /// jump minutes, user could select time in intervals of 30min, 5mins, etc....
   final int? minuteInterval;
 
@@ -1235,6 +1238,7 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
     this.yearBegin = 1900,
     this.yearEnd = 2100,
     this.value,
+    this.timeZone = "Asia/Hong_Kong",
     this.minValue,
     this.maxValue,
     this.minHour,
@@ -1253,6 +1257,7 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
                 minuteInterval <= 30 &&
                 (60 % minuteInterval == 0))) {
     super.picker = picker;
+    _timeZone = tz.getLocation(timeZone!);
     _yearBegin = yearBegin ?? 0;
     if (minValue != null && minValue!.year > _yearBegin) {
       _yearBegin = minValue!.year;
@@ -1277,7 +1282,7 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
       }
     }
     if (value == null) {
-      value = DateTime.now();
+      value = tz.TZDateTime.now(_timeZone);
     }
     _existSec = existSec();
     _verificationMinMaxValue();
@@ -1289,6 +1294,7 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
   int _colHour = -1;
   int _colDay = -1;
   int _yearBegin = 0;
+  tz.Location _timeZone = tz.getLocation("Asia/Hong_Kong");
   bool _needUpdatePrev = false;
   bool _apBeforeHourAp = false;
 
@@ -1575,7 +1581,7 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
               // 需要更新 value
               var s = value!.second;
               if (type != 2 && type != 6) s = 0;
-              value = DateTime(
+              value = tz.TZDateTime(_timeZone,
                   value!.year, value!.month, value!.day, value!.hour, m, s);
             }
           }
@@ -1665,7 +1671,7 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
       day = __day;
       _isChangeDay = true;
     }
-    value = DateTime(year, month, day, h, m, s);
+    value = tz.TZDateTime(_timeZone,year, month, day, h, m, s);
 
     if (_verificationMinMaxValue()) {
       notifyDataChanged();
@@ -1679,10 +1685,10 @@ class DateTimePickerAdapter extends PickerAdapter<DateTime> {
     DateTime? _minV = minValue;
     DateTime? _maxV = maxValue;
     if (_minV == null && yearBegin != null) {
-      _minV = DateTime(yearBegin!, 1, 1, minHour ?? 0);
+      _minV = tz.TZDateTime(_timeZone,yearBegin!, 1, 1, minHour ?? 0);
     }
     if (_maxV == null && yearEnd != null) {
-      _maxV = DateTime(yearEnd!, 12, 31, maxHour ?? 23, 59, 59);
+      _maxV = tz.TZDateTime(_timeZone,yearEnd!, 12, 31, maxHour ?? 23, 59, 59);
     }
     if (_minV != null &&
         (value!.millisecondsSinceEpoch < _minV.millisecondsSinceEpoch)) {
